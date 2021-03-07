@@ -1,14 +1,15 @@
+// yarn test packages/react-dom/src/__tests__/AsyncAct-test.js  --watchAll
 const React = require('react');
 const ReactDOM = require('react-dom');
 const ReactTestUtils = require('react-dom/test-utils');
 
-const COUNT = 100;
+const COUNT = 200;
 const iterations = Array(COUNT)
   .fill(null)
   .map((_, n) => n);
 
-const TIMEOUT = 10;
-const DIFF = 5;
+const TIMEOUT = 1;
+const DIFF = 1;
 
 const mountedContainers = new Set();
 
@@ -77,7 +78,8 @@ function Component() {
 
   return <div>{visible && <span id="test">Content</span>}</div>;
 }
-// eslint-disable-next-line
+
+// eslint-disable-next-line no-for-of-loops/no-for-of-loops
 for (const i of iterations) {
   test(`unstable test ${1 + i}`, async () => {
     const container = getContainer();
@@ -87,12 +89,15 @@ for (const i of iterations) {
     });
 
     let element = null;
-    await ReactTestUtils.act(async () => {
-      element = await waitFor(() => document.getElementById('test'));
+    await ReactTestUtils.act(
+      async () => {
+        element = await waitFor(() => document.getElementById('test'));
 
-      // Always pass
-      expect(element.closest('body')).toBeTruthy(); // = toBeInTheDocument
-    });
+        // Always pass
+        expect(element.closest('body')).toBeTruthy(); // = toBeInTheDocument
+      },
+      {flushTasksBeforeExit: false},
+    );
 
     // Randomly fails
     expect(element.closest('body')).toBeTruthy(); // = toBeInTheDocument

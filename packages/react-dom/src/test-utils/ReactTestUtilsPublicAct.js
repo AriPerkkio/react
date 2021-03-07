@@ -73,7 +73,10 @@ function flushWorkAndMicroTasks(onDone: (err: ?Error) => void) {
 let actingUpdatesScopeDepth = 0;
 let didWarnAboutUsingActInProd = false;
 
-export function act(callback: () => Thenable<mixed>): Thenable<void> {
+export function act(
+  callback: () => Thenable<mixed>,
+  options = { flushTasksBeforeExit: true },
+): Thenable<void> {
   if (!__DEV__) {
     if (didWarnAboutUsingActInProd === false) {
       didWarnAboutUsingActInProd = true;
@@ -157,16 +160,22 @@ export function act(callback: () => Thenable<mixed>): Thenable<void> {
               resolve();
               return;
             }
-            // we're about to exit the act() scope,
-            // now's the time to flush tasks/effects
-            flushWorkAndMicroTasks((err: ?Error) => {
+
+            if (options.flushTasksBeforeExit) {
+              // we're about to exit the act() scope,
+              // now's the time to flush tasks/effects
+              flushWorkAndMicroTasks((err: ?Error) => {
+                onDone();
+                if (err) {
+                  reject(err);
+                } else {
+                  resolve();
+                }
+              });
+            } else {
               onDone();
-              if (err) {
-                reject(err);
-              } else {
-                resolve();
-              }
-            });
+              resolve();
+            }
           },
           err => {
             onDone();
